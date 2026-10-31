@@ -16,7 +16,19 @@ databricks/
 gabarito/
   intencao_formularios.csv    intenção real de cada mensagem, para medir o acerto do ai_classify
 gerar_dados.py                regenera tudo (seed fixa = mesmo resultado sempre)
+test/                         testes automatizados
+.github/workflows/ci.yml      CI executado em push e pull request
 ```
+
+## Testes
+
+Execute os testes localmente com Python 3.12 ou superior:
+
+```bash
+python -m unittest discover -s test -v
+```
+
+O GitHub Actions executa esse comando automaticamente em cada push e pull request.
 
 ## 1. Banco (Supabase Postgres)
 
