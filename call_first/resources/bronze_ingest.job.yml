@@ -1,4 +1,5 @@
-# Ingestão da bronze: o CRM (Postgres) e os formulários (Storage -> Volume -> Auto Loader).
+# Ingestão e tratamento: o CRM (Postgres) e os formulários (Storage -> Volume) na bronze, o cache da BrasilAPI,
+# e o pipeline call_first_etl (bronze dos formulários + silver).
 # Diário, para um lead novo aparecer na fila em até 1 dia (PRD RNF-02). Em dev a agenda fica pausada.
 
 resources:
@@ -26,8 +27,15 @@ resources:
           notebook_task:
             notebook_path: ../src/bronze/copiar_formularios.py
 
+        - task_key: consultar_cnpj
+          depends_on:
+            - task_key: ingerir_crm
+            - task_key: copiar_formularios
+          notebook_task:
+            notebook_path: ../src/bronze/consultar_cnpj.py
+
         - task_key: atualizar_formularios
           depends_on:
-            - task_key: copiar_formularios
+            - task_key: consultar_cnpj
           pipeline_task:
             pipeline_id: ${resources.pipelines.call_first_etl.id}
