@@ -1,0 +1,54 @@
+# Metadados da fonte formularios: os formulários do site no Supabase Storage, em JSON Lines.
+# Nomes, tipos e chaves: tools/metadata/extract_metadata.py (os arquivos de storage/formularios/, cada valor como texto).
+# Descrições: só dos documentos indicados, supabase/01_schema.sql e PRD.md. A origem fica no comentário
+# de cada descrição. Onde os documentos não dizem nada, a descrição fica vazia.
+# Empresa fictícia, dados sintéticos.
+
+source: formularios
+description: Formulários em JSON Lines, com a mensagem em texto livre e a UTM, ingeridos a cada chegada de arquivo.  # PRD.md §2.3
+tables:
+
+  - name: formularios
+    description: Um formulário enviado por um lead, um objeto JSON por linha.  # PRD.md §2.3
+    columns:
+      - name: form_id
+        type: string
+        key: true
+        description: Chave do formulário.  # PRD.md §2.3
+      - name: recebido_em
+        type: timestamp
+        description: ""
+      - name: canal
+        type: string
+        description: ""
+      - name: nome
+        type: string
+        description: ""
+      - name: email
+        type: string
+        description: E-mail do contato. Normalizado (minúsculas, sem espaços), é a chave de deduplicação com os leads do CRM.  # PRD.md §2.3, RF-06 e §2.6
+      - name: telefone
+        type: string
+        description: ""
+      - name: empresa
+        type: string
+        description: ""
+      - name: cnpj
+        type: string
+        description: CNPJ da empresa. Chave da consulta à BrasilAPI com 14 dígitos.  # PRD.md §2.3
+      - name: produto_interesse
+        type: string
+        description: ""
+      - name: mensagem
+        type: string
+        description: Mensagem do lead em texto livre, de onde vêm a intenção e as entidades (produto, quantidade, prazo, orçamento).  # PRD.md §2.3, RF-10, RF-11 e §2.7
+      - name: utm
+        type: object
+        description: Parâmetros UTM do envio, um objeto com source e campaign.  # PRD.md §2.3 (UTM); campos dos dados
+        fields:
+          - name: source
+            type: string
+            description: ""
+          - name: campaign
+            type: string
+            description: ""

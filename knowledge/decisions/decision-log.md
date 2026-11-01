@@ -1,0 +1,30 @@
+# Registro de decisões
+
+Uma linha por decisão. As decisões de arquitetura do produto (D-01 a D-05) estão no `PRD.md` §2.8 e não são repetidas aqui.
+
+## Tomadas
+
+| Data | Decisão | Motivo | Origem |
+|---|---|---|---|
+| 2026-11-01 | Metadados em `metadata/<fonte>.yaml`, contratos em `contracts/<fonte>.odcs.yaml`, script de extração em `tools/metadata/` | O repo não tinha pasta para isso; uma pasta por tipo de artefato | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | As descrições dos metadados vêm só de `supabase/01_schema.sql` e `PRD.md` | Documentos indicados pelo engenheiro de dados (skill `metadata`) | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | Dono e suporte das fontes ficam como papéis genéricos (`crm-owner`, `formularios-owner`) até a reunião | Os documentos não nomeiam o dono, e o repo é público | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | Contratos em ODCS v3.1.0, validados com `datacontract lint` | Formato da skill `contract` | [`contracts/`](../../contracts/) |
+
+## Em aberto
+
+Pontos para a reunião com o dono de cada fonte. A lista completa e atualizada fica em `customProperties.openPoints` de cada contrato.
+
+| Fonte | Ponto | Contrato |
+|---|---|---|
+| crm, formularios | Dono, canal de suporte e prazo de aviso de mudança | P-01, P-02 |
+| crm | CNPJ num formato só e validado na origem? | [crm](../../contracts/crm.odcs.yaml) P-03 |
+| crm | Interações 336 e 337: duplicata ou duas reuniões? | [crm](../../contracts/crm.odcs.yaml) P-04 |
+| crm | Validar o DDD do telefone ou só sinalizar? | [crm](../../contracts/crm.odcs.yaml) P-05 |
+| crm | Carga completa das tabelas sem `atualizado_em` ou a fonte adiciona a coluna? | [crm](../../contracts/crm.odcs.yaml) P-06 |
+| crm | Como uma exclusão física chega | [crm](../../contracts/crm.odcs.yaml) P-07 |
+| crm | Lead sem vendedor é sempre lead novo não distribuído? | [crm](../../contracts/crm.odcs.yaml) P-08 |
+| formularios | Arquivos imutáveis e `form_id` sem repetição entre arquivos | [formularios](../../contracts/formularios.odcs.yaml) P-03 |
+| formularios | E-mail normalizado, duplo clique, CNPJ e DDD validados no site? | [formularios](../../contracts/formularios.odcs.yaml) P-04, P-05, P-07, P-08 |
+| formularios | O campo `produto_interesse` continua no formulário? | [formularios](../../contracts/formularios.odcs.yaml) P-06 |
+| formularios | Quem mantém a lista de canal e de UTM | [formularios](../../contracts/formularios.odcs.yaml) P-09 |

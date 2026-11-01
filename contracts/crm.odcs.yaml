@@ -1,0 +1,248 @@
+# Data contract entre a plataforma de dados e o CRM da Atlas Software (Supabase Postgres, schema crm).
+# Open Data Contract Standard (ODCS) v3.1.0. Rascunho para acordar com o dono da fonte.
+# Colunas, tipos, chaves e descrições: metadata/crm.yaml. Fatos medidos: reports/profile_crm_formularios.html.
+# Fatos e acordos apenas: nenhuma transformação, nenhum passo do pipeline.
+# Empresa fictícia, dados sintéticos.
+
+kind: DataContract
+apiVersion: v3.1.0
+id: crm
+name: crm
+version: 0.1.0
+status: draft
+description:
+  purpose: "Os leads, vendedores, produtos, oportunidades e interações do CRM da Atlas Software, lidos pela plataforma de dados para montar a fila priorizada de leads."
+  limitations: "Dados sintéticos, gerados com seed fixa. Os CNPJs são públicos, de matrizes de grandes empresas, mais alguns inválidos de propósito."
+  usage: "Leitura somente por um usuário de banco sem permissão de escrita."
+
+servers:
+  - server: supabase
+    type: postgres
+    host: "<supabase-session-pooler>"
+    port: 5432
+    database: postgres
+    schema: crm
+    description: "Supabase Postgres, acessado pelo Session pooler (IPv4) com usuário somente leitura. Host e credenciais ficam em secret scope, nunca no repositório."
+
+team:
+  name: crm
+  members:
+    - username: crm-owner
+      role: owner
+      description: "Responde pelo CRM e pela entrega. A definir (ponto aberto P-01)."
+    - username: dados-plataforma
+      role: consumer
+      description: "Lê o schema crm, carrega a bronze e roda as checagens."
+
+support:
+  - channel: crm-dados
+    tool: other
+    description: "Dúvidas sobre a entrega e avisos de mudança. Canal a definir (ponto aberto P-01)."
+
+slaProperties:
+  - property: frequency
+    value: 1
+    unit: d
+    description: "A plataforma lê o CRM ao menos uma vez por dia: um lead novo aparece na fila em até 1 dia (PRD RNF-02)."
+  - property: latency
+    value: 1
+    unit: d
+    description: "Do registro no CRM até a fila priorizada."
+
+customProperties:
+  - property: changeNotice
+    value: "a definir"
+    description: "Quantos dias antes uma mudança de schema é anunciada, com nova versão deste contrato (ponto aberto P-02)."
+  - property: access
+    value: read-only
+    description: "Usuário de banco só com SELECT no schema crm (PRD RNF-03)."
+  - property: personalData
+    value: "leads.nome_contato, leads.email, leads.telefone, leads.cargo, vendedores.nome, vendedores.email"
+    description: "Dados pessoais (LGPD), restritos às camadas que precisam deles (PRD RNF-07)."
+  - property: openPoints
+    value:
+      - "P-01 Dono e canal de suporte do CRM."
+      - "P-02 Prazo de aviso de mudança de schema."
+      - "P-03 A fonte passa a entregar o CNPJ em um formato só (14 dígitos) e validado, ou o formato misto e os 3 valores inválidos continuam?"
+      - "P-04 crm.interacoes ids 336 e 337 são idênticos fora o id: duplicata ou duas reuniões?"
+      - "P-05 Telefones com DDD inexistente (72 leads): a fonte valida o DDD ou o contrato só sinaliza?"
+      - "P-06 oportunidades, vendedores, produtos e interacoes não têm coluna de atualização: aceitar carga completa ou a fonte adiciona atualizado_em?"
+      - "P-07 Como uma exclusão física chega: hoje não há soft delete."
+      - "P-08 Lead sem vendedor: é sempre um lead novo ainda não distribuído?"
+
+schema:
+  - name: vendedores
+    physicalName: crm.vendedores
+    physicalType: table
+    description: "O time de vendas, 8 vendedores divididos por região e segmento."
+    customProperties:
+      - property: load
+        value: full
+        description: "Sem coluna de atualização; a tabela é lida inteira."
+      - property: deletes
+        value: "Sem marcação de exclusão; ativo diz se o vendedor está ativo (ponto aberto P-07)."
+    properties:
+      - {name: id, physicalName: id, logicalType: integer, physicalType: integer, required: true, primaryKey: true, primaryKeyPosition: 1, unique: true, description: ""}
+      - {name: nome, physicalName: nome, logicalType: string, physicalType: text, required: true, description: "", classification: restricted}
+      - {name: email, physicalName: email, logicalType: string, physicalType: text, required: true, unique: true, description: "E-mail do vendedor, único na tabela.", classification: restricted}
+      - {name: regiao, physicalName: regiao, logicalType: string, physicalType: text, required: true, description: "A região do vendedor."}
+      - {name: segmento_foco, physicalName: segmento_foco, logicalType: string, physicalType: text, required: true, description: "O segmento que o vendedor atende."}
+      - {name: ativo, physicalName: ativo, logicalType: boolean, physicalType: boolean, required: true, description: "Se o vendedor está ativo. Padrão true."}
+    quality:
+      - {type: library, metric: duplicateValues, arguments: {properties: [id]}, mustBe: 0, description: "id único."}
+
+  - name: produtos
+    physicalName: crm.produtos
+    physicalType: table
+    description: "Os 5 produtos que a Atlas Software vende por assinatura."
+    customProperties:
+      - property: load
+        value: full
+        description: "Sem coluna de atualização; a tabela é lida inteira."
+      - property: deletes
+        value: "Sem marcação de exclusão."
+    properties:
+      - {name: id, physicalName: id, logicalType: integer, physicalType: integer, required: true, primaryKey: true, primaryKeyPosition: 1, unique: true, description: ""}
+      - name: nome
+        physicalName: nome
+        logicalType: string
+        physicalType: text
+        required: true
+        description: "Atlas Gestão (ERP), Atlas BI, Atlas Fiscal, Atlas CRM ou Atlas Estoque."
+        quality:
+          - {type: library, metric: invalidValues, arguments: {validValues: ["Atlas Gestão (ERP)", "Atlas BI", "Atlas Fiscal", "Atlas CRM", "Atlas Estoque"]}, mustBe: 0, description: "Só os 5 produtos do catálogo."}
+      - {name: categoria, physicalName: categoria, logicalType: string, physicalType: text, required: true, description: ""}
+      - name: preco_mensal
+        physicalName: preco_mensal
+        logicalType: number
+        physicalType: numeric(12,2)
+        required: true
+        description: "Preço de lista por licença por mês."
+        quality:
+          - {type: text, description: "Maior que zero."}
+
+  - name: leads
+    physicalName: crm.leads
+    physicalType: table
+    description: "Um lead, contato com potencial de compra. A chave da fonte é leads.id."
+    customProperties:
+      - property: load
+        value: changes
+        description: "Incremental por atualizado_em, que um trigger grava em todo UPDATE (PRD RF-01)."
+      - property: deletes
+        value: "Sem marcação de exclusão; descartado é um status do lead, não uma exclusão (ponto aberto P-07)."
+    properties:
+      - {name: id, physicalName: id, logicalType: integer, physicalType: integer, required: true, primaryKey: true, primaryKeyPosition: 1, unique: true, description: "ID do lead no CRM."}
+      - {name: nome_contato, physicalName: nome_contato, logicalType: string, physicalType: text, required: true, description: "", classification: restricted}
+      - {name: email, physicalName: email, logicalType: string, physicalType: text, required: true, description: "E-mail do contato. Normalizado (minúsculas, sem espaços), é a chave de deduplicação entre CRM e formulários.", classification: restricted}
+      - name: telefone
+        physicalName: telefone
+        logicalType: string
+        physicalType: text
+        required: false
+        description: ""
+        classification: restricted
+        logicalTypeOptions: {pattern: '^\(\d{2}\) \d{5}-\d{4}$'}
+      - {name: cargo, physicalName: cargo, logicalType: string, physicalType: text, required: false, description: "", classification: restricted}
+      - {name: empresa, physicalName: empresa, logicalType: string, physicalType: text, required: false, description: ""}
+      - name: cnpj
+        physicalName: cnpj
+        logicalType: string
+        physicalType: text
+        required: false
+        description: "CNPJ da empresa, propositalmente sujo, com e sem máscara e alguns inválidos. Chave da consulta à BrasilAPI com 14 dígitos."
+        quality:
+          - {type: text, description: "Formato aceito: 14 dígitos ou 99.999.999/9999-99. Hoje 48 leads trazem 1 de 3 CNPJs com dígito verificador inválido; a fonte não garante a validade (ponto aberto P-03)."}
+      - {name: uf, physicalName: uf, logicalType: string, physicalType: character(2), required: false, description: ""}
+      - name: origem
+        physicalName: origem
+        logicalType: string
+        physicalType: text
+        required: true
+        description: "Canal de chegada do lead, site, evento, indicacao, outbound ou linkedin."
+        quality:
+          - {type: library, metric: invalidValues, arguments: {validValues: [site, evento, indicacao, outbound, linkedin]}, mustBe: 0}
+      - name: status
+        physicalName: status
+        logicalType: string
+        physicalType: text
+        required: true
+        description: "Situação do lead, novo, contatado, qualificado ou descartado. Padrão novo."
+        quality:
+          - {type: library, metric: invalidValues, arguments: {validValues: [novo, contatado, qualificado, descartado]}, mustBe: 0}
+      - {name: vendedor_id, physicalName: vendedor_id, logicalType: integer, physicalType: integer, required: false, description: "O vendedor responsável, referência a vendedores.id."}
+      - {name: criado_em, physicalName: criado_em, logicalType: timestamp, logicalTypeOptions: {defaultTimezone: UTC}, physicalType: timestamptz, required: true, description: "Quando o lead foi criado. Padrão now()."}
+      - {name: atualizado_em, physicalName: atualizado_em, logicalType: timestamp, logicalTypeOptions: {defaultTimezone: UTC}, physicalType: timestamptz, required: true, description: "Watermark da carga incremental. Um trigger grava now() em todo UPDATE."}
+    quality:
+      - {type: library, metric: duplicateValues, arguments: {properties: [id]}, mustBe: 0, description: "id único."}
+      - {type: text, description: "E-mail único depois de normalizado (minúsculas, sem espaços)."}
+      - {type: text, description: "Todo vendedor_id preenchido existe em vendedores."}
+      - {type: text, description: "atualizado_em nunca é anterior a criado_em."}
+
+  - name: oportunidades
+    physicalName: crm.oportunidades
+    physicalType: table
+    description: ""
+    customProperties:
+      - property: load
+        value: full
+        description: "Sem coluna de atualização: o estágio muda sem marca de quando (ponto aberto P-06)."
+      - property: deletes
+        value: "Sem marcação de exclusão; perdida é um estágio, não uma exclusão (ponto aberto P-07)."
+    properties:
+      - {name: id, physicalName: id, logicalType: integer, physicalType: integer, required: true, primaryKey: true, primaryKeyPosition: 1, unique: true, description: ""}
+      - {name: lead_id, physicalName: lead_id, logicalType: integer, physicalType: integer, required: true, description: "O lead da oportunidade, referência a leads.id."}
+      - {name: produto_id, physicalName: produto_id, logicalType: integer, physicalType: integer, required: true, description: "O produto da oportunidade, referência a produtos.id."}
+      - name: valor_estimado
+        physicalName: valor_estimado
+        logicalType: number
+        physicalType: numeric(14,2)
+        required: true
+        description: ""
+        quality:
+          - {type: text, description: "Maior que zero."}
+      - name: estagio
+        physicalName: estagio
+        logicalType: string
+        physicalType: text
+        required: true
+        description: "Estágio da oportunidade, prospeccao, proposta, negociacao, ganha ou perdida."
+        quality:
+          - {type: library, metric: invalidValues, arguments: {validValues: [prospeccao, proposta, negociacao, ganha, perdida]}, mustBe: 0}
+      - {name: criada_em, physicalName: criada_em, logicalType: timestamp, logicalTypeOptions: {defaultTimezone: UTC}, physicalType: timestamptz, required: true, description: "Quando a oportunidade foi criada. Padrão now()."}
+      - {name: fechada_em, physicalName: fechada_em, logicalType: timestamp, logicalTypeOptions: {defaultTimezone: UTC}, physicalType: timestamptz, required: false, description: ""}
+      - {name: motivo_perda, physicalName: motivo_perda, logicalType: string, physicalType: text, required: false, description: ""}
+    quality:
+      - {type: library, metric: duplicateValues, arguments: {properties: [id]}, mustBe: 0, description: "id único."}
+      - {type: text, description: "Todo lead_id existe em leads e todo produto_id existe em produtos."}
+      - {type: text, description: "fechada_em preenchida se e somente se estagio é ganha ou perdida, e nunca antes de criada_em."}
+      - {type: text, description: "motivo_perda preenchido se e somente se estagio é perdida."}
+
+  - name: interacoes
+    physicalName: crm.interacoes
+    physicalType: table
+    description: ""
+    customProperties:
+      - property: load
+        value: full
+        description: "Sem coluna de atualização (ponto aberto P-06)."
+      - property: deletes
+        value: "Sem marcação de exclusão."
+    properties:
+      - {name: id, physicalName: id, logicalType: integer, physicalType: integer, required: true, primaryKey: true, primaryKeyPosition: 1, unique: true, description: ""}
+      - {name: lead_id, physicalName: lead_id, logicalType: integer, physicalType: integer, required: true, description: "O lead da interação, referência a leads.id."}
+      - {name: vendedor_id, physicalName: vendedor_id, logicalType: integer, physicalType: integer, required: true, description: "O vendedor da interação, referência a vendedores.id."}
+      - name: tipo
+        physicalName: tipo
+        logicalType: string
+        physicalType: text
+        required: true
+        description: "Tipo da interação, ligacao, email, reuniao ou whatsapp."
+        quality:
+          - {type: library, metric: invalidValues, arguments: {validValues: [ligacao, email, reuniao, whatsapp]}, mustBe: 0}
+      - {name: ocorrida_em, physicalName: ocorrida_em, logicalType: timestamp, logicalTypeOptions: {defaultTimezone: UTC}, physicalType: timestamptz, required: true, description: "Quando a interação ocorreu. Padrão now()."}
+      - {name: resultado, physicalName: resultado, logicalType: string, physicalType: text, required: false, description: ""}
+    quality:
+      - {type: library, metric: duplicateValues, arguments: {properties: [id]}, mustBe: 0, description: "id único."}
+      - {type: text, description: "Todo lead_id existe em leads e todo vendedor_id existe em vendedores."}
+      - {type: text, description: "Uma interação é registrada uma vez só (ponto aberto P-04: ids 336 e 337)."}

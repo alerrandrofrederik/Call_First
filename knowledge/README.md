@@ -26,6 +26,8 @@ Regras:
 - [decisions/decision-log.md](decisions/decision-log.md): decisões tomadas e em aberto
 - [incidents/incident-log.md](incidents/incident-log.md): incidentes de execução
 - [sources/rystore.md](sources/rystore.md): fonte RYStore (varejo)
+- [sources/crm.md](sources/crm.md): fonte CRM, Supabase Postgres schema crm, com metadados e contrato
+- [sources/formularios.md](sources/formularios.md): fonte formulários, Supabase Storage em JSON Lines, com metadados e contrato
 
 ## Veja também
 
