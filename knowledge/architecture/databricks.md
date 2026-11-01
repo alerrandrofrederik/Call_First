@@ -37,11 +37,29 @@ Dado como veio, com `_fonte` e `_ingerido_em` em todas e `_arquivo` nos formulá
 
 Validação em 2026-11-01: as contagens batem com o [perfil](../../reports/profile_crm_formularios.html), e uma segunda execução do job não gravou nenhuma linha nova (origem: `databricks bundle run bronze_ingest -t dev`, duas vezes).
 
+Também na bronze: `cnpj_api` (Delta, append), a resposta crua da BrasilAPI por CNPJ, escrita pela tarefa `consultar_cnpj`. Só CNPJs com DV válido e ainda não consultados; 200 e 4xx ficam gravados, timeout e 5xx são tentados na próxima execução (`PRD.md` RF-03, RNF-06).
+
+## Tabelas da silver
+
+Materialized views do pipeline `call_first_etl` em `call_first.silver` (`PRD.md` RF-05 a RF-09). As regras de limpeza ficam em [`utilities/limpeza.py`](../../call_first/src/call_first_etl/utilities/limpeza.py). As expectations rodam em modo aviso e ficam no event log do pipeline.
+
+| Tabela | O que guarda |
+|---|---|
+| `vendedores`, `produtos`, `oportunidades` | as tabelas do CRM com as checagens do contrato |
+| `interacoes` | idem, com `interacao_duplicada` (sinaliza, não remove; ponto aberto P-04) |
+| `formularios` | um formulário por linha: `recebido_em` timestamp, `utm_source`/`utm_campaign`, `email_norm`, `cnpj_norm`, `cnpj_valido`, `ddd_valido`; sem o envio repetido em até 5 minutos (RF-07) |
+| `empresas` | cadastro da BrasilAPI, um CNPJ por linha: razão social, porte, CNAE, UF, município, situação |
+| `leads` | um lead por `email_norm`, CRM e formulários juntos: cadastro do CRM quando existe, senão o do formulário mais recente; a última mensagem; a empresa pelo CNPJ válido. Lead só de formulário tem `lead_id` nulo e `origem_lead = 'formulario'` |
+
+`leads_crm` é uma view privada do pipeline (a versão mais recente de cada lead da bronze, que é append) e não aparece no catálogo.
+
+Validação em 2026-11-01 (origem: consultas no SQL warehouse depois de `bundle run bronze_ingest -t dev`, duas vezes): os números batem com o [perfil](../../reports/profile_crm_formularios.html) (duplo clique removido, CNPJs e DDDs inválidos sinalizados, o par de interações marcado, nenhum CNPJ inválido enviado à API), e a segunda execução não fez nenhuma consulta nova nem mudou as contagens.
+
 ## Secret scope `call_first`
 
 Credenciais das fontes, gravadas a partir do `.env` local. Só os nomes das chaves ficam aqui: `pg_host`, `pg_port`, `pg_database`, `pg_user`, `pg_password`, `s3_endpoint`, `s3_region`, `s3_access_key_id`, `s3_secret_access_key`, `s3_bucket`. Para trocar um valor: `databricks secrets put-secret call_first <chave> -p pessoal`.
 
-Rede: o compute serverless deste workspace alcança o pooler do Supabase (5432) e o Storage (443) (origem: teste de conexão serverless, 2026-11-01).
+Rede: o compute serverless deste workspace alcança o pooler do Supabase (5432), o Storage (443) e a BrasilAPI (443) (origem: testes de conexão serverless, 2026-11-01).
 
 ## Bundle
 
@@ -50,8 +68,8 @@ O código e os recursos do Databricks são publicados pelo bundle em [`call_firs
 - targets `dev` (padrão, `mode: development`) e `prod`, os dois no catálogo `call_first`;
 - variáveis `schema_bronze`, `schema_silver` e `schema_gold`, com padrão `bronze`, `silver` e `gold`;
 - dev e prod usam os mesmos schemas, então um deploy em dev grava nas tabelas de prod (decisão em aberto, ver o [registro de decisões](../decisions/decision-log.md));
-- job `bronze_ingest` (`resources/bronze_ingest.job.yml`), diário (pausado em dev): `ingerir_crm` em paralelo com `copiar_formularios` → `atualizar_formularios` (o pipeline);
-- pipeline `call_first_etl` (serverless), hoje só com a bronze dos formulários;
+- job `bronze_ingest` (`resources/bronze_ingest.job.yml`), diário (pausado em dev): `ingerir_crm` em paralelo com `copiar_formularios` → `consultar_cnpj` → `atualizar_formularios` (o pipeline);
+- pipeline `call_first_etl` (serverless): a bronze dos formulários e a silver inteira;
 - o código de exemplo do template (taxis, `sample_job`) foi removido.
 
 Comandos: `databricks bundle deploy -t dev -p pessoal` e `databricks bundle run bronze_ingest -t dev -p pessoal`, a partir de `call_first/`. Só o target `dev` foi publicado até agora.

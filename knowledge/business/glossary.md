@@ -34,3 +34,5 @@ Termos e regras confirmados nos documentos ou nos dados. Cada um traz a origem.
 | Oportunidades só existem para leads com status `qualificado` ou `contatado` | [perfil](../../reports/profile_crm_formularios.html) |
 | Os leads sem vendedor têm todos status `novo` (ponto aberto P-08 no contrato do CRM) | [perfil](../../reports/profile_crm_formularios.html) |
 | `fechada_em` está preenchida só nas oportunidades `ganha` ou `perdida`, e `motivo_perda` só nas `perdida` | [perfil](../../reports/profile_crm_formularios.html) |
+| Um mesmo lead pode mandar mais de um formulário com conteúdo diferente; a silver fica com um lead e a mensagem mais recente (`qtd_formularios` conta os envios) | `silver.leads`, 2026-11-01 |
+| Os 30 CNPJs válidos têm porte `DEMAIS` na Receita; 29 estão com situação `ATIVA` e 1 `BAIXADA`. Com esses dados, o componente porte da nota (`PRD.md` §2.6) é o mesmo para todo lead com CNPJ válido | `silver.empresas` (BrasilAPI), 2026-11-01 |

@@ -10,6 +10,10 @@ Uma linha por decisão. As decisões de arquitetura do produto (D-01 a D-05) est
 | 2026-11-01 | As descrições dos metadados vêm só de `supabase/01_schema.sql` e `PRD.md` | Documentos indicados pelo engenheiro de dados (skill `metadata`) | Engenheiro de dados, nesta sessão |
 | 2026-11-01 | Dono e suporte das fontes ficam como papéis genéricos (`crm-owner`, `formularios-owner`) até a reunião | Os documentos não nomeiam o dono, e o repo é público | Engenheiro de dados, nesta sessão |
 | 2026-11-01 | Contratos em ODCS v3.1.0, validados com `datacontract lint` | Formato da skill `contract` | [`contracts/`](../../contracts/) |
+| 2026-11-01 | Bronze: `crm_leads` incremental por `atualizado_em`, as outras tabelas do CRM em carga completa; formulários por Auto Loader sobre o Volume `raw` | Só `leads` tem coluna de atualização (contrato crm, P-06); `PRD.md` D-02 | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | Silver: CNPJ inválido, DDD inexistente e interação repetida são **sinalizados** (flags + expectations em modo aviso), não removidos; só o envio repetido em até 5 minutos sai (RF-07) | Os pontos P-03, P-04 e P-05 ainda estão em aberto com o dono da fonte; remover agora perderia dado que pode ser legítimo | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | Silver: lead só de formulário fica com `lead_id` nulo e `origem_lead = 'formulario'`; a chave da silver é `email_norm` | O ID gerado é da gold (`PRD.md` §2.9) | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | BrasilAPI entra junto com a silver: cache cru em `bronze.cnpj_api`, só CNPJs com DV válido | `PRD.md` RF-03, RF-08, D-03 | Engenheiro de dados, nesta sessão |
 
 ## Em aberto
 

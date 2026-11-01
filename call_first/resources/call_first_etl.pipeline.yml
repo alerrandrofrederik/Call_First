@@ -1,4 +1,5 @@
-# O pipeline declarativo do call_first. Hoje só a bronze dos formulários (Auto Loader sobre o Volume raw).
+# O pipeline declarativo do call_first: a bronze dos formulários (Auto Loader sobre o Volume raw)
+# e a silver inteira (schema silver, nomes totalmente qualificados).
 
 resources:
   pipelines:
@@ -12,6 +13,7 @@ resources:
       configuration:
         call_first.catalog: ${var.catalog}
         call_first.schema_bronze: ${var.schema_bronze}
+        call_first.schema_silver: ${var.schema_silver}
 
       libraries:
         - glob:
