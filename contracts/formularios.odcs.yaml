@@ -1,0 +1,150 @@
+# Data contract entre a plataforma de dados e a fonte formularios (Supabase Storage, JSON Lines).
+# Open Data Contract Standard (ODCS) v3.1.0. Rascunho para acordar com o dono da fonte.
+# Campos, tipos, chaves e descrições: metadata/formularios.yaml. Fatos medidos: reports/profile_crm_formularios.html.
+# Fatos e acordos apenas: nenhuma transformação, nenhum passo do pipeline.
+# Empresa fictícia, dados sintéticos.
+
+kind: DataContract
+apiVersion: v3.1.0
+id: formularios
+name: formularios
+version: 0.1.0
+status: draft
+description:
+  purpose: "Os formulários enviados pelos leads, com a mensagem em texto livre e a UTM, lidos pela plataforma para classificar a intenção e priorizar o lead."
+  limitations: "Dados sintéticos. O lote ao vivo traz mensagens de propósito ambíguas, para a demonstração da IA."
+  usage: "Leitura dos arquivos pela API S3 do Supabase Storage com chave de acesso somente leitura."
+
+servers:
+  - server: supabase-storage
+    type: s3
+    location: "s3://<bucket>/"
+    format: json
+    delimiter: new_line
+    description: "Supabase Storage pela API S3. Endpoint, bucket e chaves ficam em secret scope, nunca no repositório. Um arquivo .jsonl por lote."
+
+team:
+  name: formularios
+  members:
+    - username: formularios-owner
+      role: owner
+      description: "Responde pelo site e pela entrega dos arquivos. A definir (ponto aberto P-01)."
+    - username: dados-plataforma
+      role: consumer
+      description: "Copia os arquivos novos para um Volume, carrega a bronze e roda as checagens."
+
+support:
+  - channel: formularios-dados
+    tool: other
+    description: "Dúvidas sobre um arquivo e avisos de mudança. Canal a definir (ponto aberto P-01)."
+
+slaProperties:
+  - property: frequency
+    value: "a cada arquivo"
+    description: "Um arquivo novo a cada lote, processado uma única vez (PRD §2.3 e RF-02)."
+  - property: latency
+    value: 1
+    unit: d
+    description: "Da chegada do arquivo até a fila priorizada (PRD RNF-02)."
+
+customProperties:
+  - property: changeNotice
+    value: "a definir"
+    description: "Quantos dias antes uma mudança de campo ou formato é anunciada, com nova versão deste contrato (ponto aberto P-02)."
+  - property: fileNaming
+    value: "formularios_AAAAMMDD.jsonl na carga inicial; um nome novo por lote"
+    description: "Arquivos imutáveis: um arquivo entregue nunca é reescrito nem removido (ponto aberto P-03)."
+  - property: personalData
+    value: "nome, email, telefone, mensagem"
+    description: "Dados pessoais (LGPD), restritos às camadas que precisam deles (PRD RNF-07). A mensagem é texto livre e pode conter dados pessoais."
+  - property: openPoints
+    value:
+      - "P-01 Dono e canal de suporte da fonte."
+      - "P-02 Prazo de aviso de mudança de campo ou formato."
+      - "P-03 Os arquivos são imutáveis e um form_id nunca se repete entre arquivos? Hoje 0 repetições entre a carga inicial e o lote."
+      - "P-04 O site pode normalizar o e-mail (minúsculas, sem espaços)? Hoje 25 formulários chegam com espaços e MAIÚSCULAS."
+      - "P-05 Envio duplicado (duplo clique, F00008 = F00151): o site pode bloquear, ou a fonte aceita entregar duplicatas?"
+      - "P-06 produto_interesse é opcional e diverge do produto da mensagem em 41 de 50 casos: o campo continua no formulário?"
+      - "P-07 CNPJ com e sem máscara e com dígito inválido (25 formulários): o site valida o CNPJ?"
+      - "P-08 Telefones com DDD inexistente (42 formulários): o site valida o DDD?"
+      - "P-09 Lista fechada de canal e de utm.source/utm.campaign: quem mantém e como avisa um valor novo?"
+
+schema:
+  - name: formularios
+    physicalName: formularios
+    physicalType: object
+    description: "Um formulário enviado por um lead, um objeto JSON por linha."
+    customProperties:
+      - property: encoding
+        value: utf-8
+        description: "Sem BOM."
+      - property: lineSeparator
+        value: LF
+      - property: nullToken
+        value: "null"
+        description: "JSON null é o único token de ausência; nenhum campo chega como string vazia."
+      - property: load
+        value: changes
+        description: "Só os arquivos novos; cada arquivo traz só formulários novos."
+      - property: deletes
+        value: "Sem exclusão: um formulário entregue não é retirado."
+    properties:
+      - {name: form_id, physicalName: form_id, logicalType: string, physicalType: string, required: true, primaryKey: true, primaryKeyPosition: 1, unique: true, description: "Chave do formulário.", logicalTypeOptions: {pattern: '^F\d{5}$'}}
+      - name: recebido_em
+        physicalName: recebido_em
+        logicalType: timestamp
+        logicalTypeOptions: {format: "yyyy-MM-dd'T'HH:mm:ssXXX", defaultTimezone: "America/Sao_Paulo"}
+        physicalType: string
+        required: true
+        description: ""
+      - name: canal
+        physicalName: canal
+        logicalType: string
+        physicalType: string
+        required: true
+        description: ""
+        quality:
+          - {type: text, description: "Valores entregues hoje: site, landing_page, evento. Um valor novo é anunciado (ponto aberto P-09)."}
+      - {name: nome, physicalName: nome, logicalType: string, physicalType: string, required: true, description: "", classification: restricted}
+      - name: email
+        physicalName: email
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "E-mail do contato. Normalizado (minúsculas, sem espaços), é a chave de deduplicação com os leads do CRM."
+        classification: restricted
+        quality:
+          - {type: text, description: "A fonte não garante o e-mail normalizado: pode chegar com espaços nas pontas e em MAIÚSCULAS (ponto aberto P-04)."}
+      - {name: telefone, physicalName: telefone, logicalType: string, physicalType: string, required: true, description: "", classification: restricted, logicalTypeOptions: {pattern: '^\(\d{2}\) \d{5}-\d{4}$'}}
+      - {name: empresa, physicalName: empresa, logicalType: string, physicalType: string, required: false, description: ""}
+      - name: cnpj
+        physicalName: cnpj
+        logicalType: string
+        physicalType: string
+        required: false
+        description: "CNPJ da empresa. Chave da consulta à BrasilAPI com 14 dígitos."
+        quality:
+          - {type: text, description: "Formato aceito: 14 dígitos ou 99.999.999/9999-99. A fonte não garante o dígito verificador (ponto aberto P-07)."}
+          - {type: text, description: "empresa e cnpj chegam juntos: os dois preenchidos ou os dois null."}
+      - {name: produto_interesse, physicalName: produto_interesse, logicalType: string, physicalType: string, required: false, description: ""}
+      - name: mensagem
+        physicalName: mensagem
+        logicalType: string
+        physicalType: string
+        required: true
+        description: "Mensagem do lead em texto livre, de onde vêm a intenção e as entidades (produto, quantidade, prazo, orçamento)."
+        classification: restricted
+      - name: utm
+        physicalName: utm
+        logicalType: object
+        physicalType: object
+        required: true
+        description: "Parâmetros UTM do envio, um objeto com source e campaign."
+        properties:
+          - {name: source, physicalName: source, logicalType: string, physicalType: string, required: true, description: ""}
+          - {name: campaign, physicalName: campaign, logicalType: string, physicalType: string, required: false, description: ""}
+    quality:
+      - {type: library, metric: duplicateValues, arguments: {properties: [form_id]}, mustBe: 0, description: "form_id único entre todos os arquivos."}
+      - {type: text, description: "Toda linha é um JSON válido com as 11 chaves, mesmo quando o valor é null."}
+      - {type: text, description: "recebido_em nunca está no futuro."}
+      - {type: text, description: "Um envio chega uma vez só (ponto aberto P-05)."}

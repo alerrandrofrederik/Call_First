@@ -1,0 +1,145 @@
+# Metadados da fonte crm: o CRM da Atlas Software no Supabase Postgres, schema crm.
+# Nomes, tipos e chaves: tools/metadata/extract_metadata.py (information_schema, conexão somente leitura).
+# Descrições: só dos documentos indicados, supabase/01_schema.sql e PRD.md. A origem fica no comentário
+# de cada descrição. Onde os documentos não dizem nada, a descrição fica vazia.
+# Empresa fictícia, dados sintéticos.
+
+source: crm
+description: CRM da Atlas Software, fonte relacional do workshop.  # 01_schema.sql, COMMENT ON SCHEMA crm
+tables:
+
+  - name: vendedores
+    description: O time de vendas, 8 vendedores divididos por região e segmento.  # PRD.md §1.1
+    columns:
+      - name: id
+        type: integer
+        key: true
+        description: ""
+      - name: nome
+        type: string
+        description: ""
+      - name: email
+        type: string
+        description: E-mail do vendedor, único na tabela.  # 01_schema.sql, UNIQUE
+      - name: regiao
+        type: string
+        description: A região do vendedor.  # PRD.md §1.1, "divididos por região e segmento"
+      - name: segmento_foco
+        type: string
+        description: O segmento que o vendedor atende.  # PRD.md §1.1, "divididos por região e segmento"
+      - name: ativo
+        type: boolean
+        description: Se o vendedor está ativo. Padrão true.  # 01_schema.sql, DEFAULT true
+
+  - name: produtos
+    description: Os 5 produtos que a Atlas Software vende por assinatura.  # PRD.md §1.1
+    columns:
+      - name: id
+        type: integer
+        key: true
+        description: ""
+      - name: nome
+        type: string
+        description: Atlas Gestão (ERP), Atlas BI, Atlas Fiscal, Atlas CRM ou Atlas Estoque.  # PRD.md §1.1
+      - name: categoria
+        type: string
+        description: ""
+      - name: preco_mensal
+        type: decimal
+        description: Preço de lista por licença por mês.  # 01_schema.sql, comentário da coluna
+
+  - name: leads
+    description: Um lead, contato com potencial de compra. A chave da fonte é leads.id.  # PRD.md §6 glossário e §2.3
+    columns:
+      - name: id
+        type: integer
+        key: true
+        description: ID do lead no CRM.  # PRD.md §2.9, lead_id
+      - name: nome_contato
+        type: string
+        description: ""
+      - name: email
+        type: string
+        description: E-mail do contato. Normalizado (minúsculas, sem espaços), é a chave de deduplicação entre CRM e formulários.  # PRD.md §2.3, RF-06 e §2.6
+      - name: telefone
+        type: string
+        description: ""
+      - name: cargo
+        type: string
+        description: ""
+      - name: empresa
+        type: string
+        description: ""
+      - name: cnpj
+        type: string
+        description: CNPJ da empresa, propositalmente sujo, com e sem máscara e alguns inválidos. Chave da consulta à BrasilAPI com 14 dígitos.  # 01_schema.sql, comentário da coluna; PRD.md §2.3
+      - name: uf
+        type: string
+        description: ""
+      - name: origem
+        type: string
+        description: Canal de chegada do lead, site, evento, indicacao, outbound ou linkedin.  # 01_schema.sql, CHECK; PRD.md §1.1
+      - name: status
+        type: string
+        description: Situação do lead, novo, contatado, qualificado ou descartado. Padrão novo.  # 01_schema.sql, CHECK e DEFAULT
+      - name: vendedor_id
+        type: integer
+        description: O vendedor responsável, referência a vendedores.id.  # 01_schema.sql, REFERENCES
+      - name: criado_em
+        type: timestamp
+        description: Quando o lead foi criado. Padrão now().  # 01_schema.sql, DEFAULT now()
+      - name: atualizado_em
+        type: timestamp
+        description: Watermark da carga incremental. Um trigger grava now() em todo UPDATE.  # 01_schema.sql, comentário e trigger; PRD.md RF-01
+
+  - name: oportunidades
+    description: ""
+    columns:
+      - name: id
+        type: integer
+        key: true
+        description: ""
+      - name: lead_id
+        type: integer
+        description: O lead da oportunidade, referência a leads.id.  # 01_schema.sql, REFERENCES
+      - name: produto_id
+        type: integer
+        description: O produto da oportunidade, referência a produtos.id.  # 01_schema.sql, REFERENCES
+      - name: valor_estimado
+        type: decimal
+        description: ""
+      - name: estagio
+        type: string
+        description: Estágio da oportunidade, prospeccao, proposta, negociacao, ganha ou perdida.  # 01_schema.sql, CHECK
+      - name: criada_em
+        type: timestamp
+        description: Quando a oportunidade foi criada. Padrão now().  # 01_schema.sql, DEFAULT now()
+      - name: fechada_em
+        type: timestamp
+        description: ""
+      - name: motivo_perda
+        type: string
+        description: ""
+
+  - name: interacoes
+    description: ""
+    columns:
+      - name: id
+        type: integer
+        key: true
+        description: ""
+      - name: lead_id
+        type: integer
+        description: O lead da interação, referência a leads.id.  # 01_schema.sql, REFERENCES
+      - name: vendedor_id
+        type: integer
+        description: O vendedor da interação, referência a vendedores.id.  # 01_schema.sql, REFERENCES
+      - name: tipo
+        type: string
+        description: Tipo da interação, ligacao, email, reuniao ou whatsapp.  # 01_schema.sql, CHECK
+      - name: ocorrida_em
+        type: timestamp
+        description: Quando a interação ocorreu. Padrão now().  # 01_schema.sql, DEFAULT now()
+      - name: resultado
+        type: string
+        description: ""
