@@ -20,12 +20,5 @@ dev = [
     "ipykernel",
 ]
 
-[project.scripts]
-main = "call_first.main:main"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.ruff]
 line-length = 120

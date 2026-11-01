@@ -1,0 +1,33 @@
+# Ingestão da bronze: o CRM (Postgres) e os formulários (Storage -> Volume -> Auto Loader).
+# Diário, para um lead novo aparecer na fila em até 1 dia (PRD RNF-02). Em dev a agenda fica pausada.
+
+resources:
+  jobs:
+    bronze_ingest:
+      name: bronze_ingest
+
+      trigger:
+        periodic:
+          interval: 1
+          unit: DAYS
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${var.schema_bronze}
+
+      tasks:
+        - task_key: ingerir_crm
+          notebook_task:
+            notebook_path: ../src/bronze/ingerir_crm.py
+
+        - task_key: copiar_formularios
+          notebook_task:
+            notebook_path: ../src/bronze/copiar_formularios.py
+
+        - task_key: atualizar_formularios
+          depends_on:
+            - task_key: copiar_formularios
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.call_first_etl.id}
