@@ -18,6 +18,10 @@ O CRM da Atlas Software, empresa fictícia do workshop. Guarda os leads, o time 
 - `oportunidades`, `interacoes`, `vendedores` e `produtos`: não têm coluna de atualização, então a proposta é carga completa (origem: o perfil; ponto aberto P-06 no contrato).
 - Não há marcação de exclusão em nenhuma tabela (origem: o perfil).
 
+## Na bronze
+
+Tabelas `call_first.bronze.crm_<tabela>`, escritas pelo notebook [`ingerir_crm.py`](../../call_first/src/bronze/ingerir_crm.py) do job `bronze_ingest`: `crm_leads` em append pela marca de `atualizado_em`, as outras 4 substituídas a cada execução. Detalhes em [databricks.md](../architecture/databricks.md#tabelas-da-bronze).
+
 ## Documentos
 
 - [Data contract](../../contracts/crm.odcs.yaml), rascunho v0.1.0, com os pontos abertos para o dono da fonte.

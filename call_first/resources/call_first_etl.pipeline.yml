@@ -1,4 +1,4 @@
-# The main pipeline for call_first
+# O pipeline declarativo do call_first. Hoje só a bronze dos formulários (Auto Loader sobre o Volume raw).
 
 resources:
   pipelines:
@@ -9,12 +9,10 @@ resources:
       serverless: true
       root_path: "../src/call_first_etl"
 
+      configuration:
+        call_first.catalog: ${var.catalog}
+        call_first.schema_bronze: ${var.schema_bronze}
+
       libraries:
         - glob:
             include: ../src/call_first_etl/transformations/**
-
-      environment:
-        dependencies:
-          # We include every dependency defined by pyproject.toml by defining an editable environment
-          # that points to the folder where pyproject.toml is deployed.
-          - --editable ${workspace.file_path}

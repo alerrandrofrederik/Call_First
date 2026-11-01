@@ -17,6 +17,12 @@ Um objeto JSON por linha, com 11 campos e `utm` aninhado (`source`, `campaign`).
 - Um arquivo novo por lote, processado uma única vez (origem: `PRD.md` RF-02).
 - Arquivo imutável, sem exclusão; a fonte não garante e-mail normalizado nem CNPJ válido (origem: o perfil; pontos abertos no contrato).
 
+## Na bronze
+
+O notebook [`copiar_formularios.py`](../../call_first/src/bronze/copiar_formularios.py) copia do bucket para o Volume `call_first.bronze.raw` só os arquivos novos, e o pipeline `call_first_etl` ([`formularios.py`](../../call_first/src/call_first_etl/transformations/formularios.py)) ingere cada um uma vez com Auto Loader na streaming table `call_first.bronze.formularios`. Detalhes em [databricks.md](../architecture/databricks.md#tabelas-da-bronze).
+
+Para a demo, subir o lote ao vivo no bucket (`storage/upload_supabase_storage.py --lote`) e rodar o job de novo: só o arquivo novo entra.
+
 ## Documentos
 
 - [Data contract](../../contracts/formularios.odcs.yaml), rascunho v0.1.0, com os pontos abertos para o dono da fonte.
