@@ -1,0 +1,21 @@
+# O pipeline da gold: histórico de conversão, fila priorizada e avaliação da IA (schema gold).
+# Roda depois da tarefa enriquecer_ia do job, que grava gold.ia_formularios.
+
+resources:
+  pipelines:
+    call_first_gold:
+      name: call_first_gold
+      catalog: ${var.catalog}
+      schema: ${var.schema_gold}
+      serverless: true
+      root_path: "../src/call_first_gold"
+
+      configuration:
+        call_first.catalog: ${var.catalog}
+        call_first.schema_bronze: ${var.schema_bronze}
+        call_first.schema_silver: ${var.schema_silver}
+        call_first.schema_gold: ${var.schema_gold}
+
+      libraries:
+        - glob:
+            include: ../src/call_first_gold/transformations/**
