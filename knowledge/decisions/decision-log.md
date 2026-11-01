@@ -17,6 +17,7 @@ Pontos para a reunião com o dono de cada fonte. A lista completa e atualizada f
 
 | Fonte | Ponto | Contrato |
 |---|---|---|
+| plataforma | Os targets `dev` e `prod` do bundle usam os mesmos schemas `bronze`, `silver` e `gold`: separar (outro catálogo ou prefixo) ou aceitar no workshop? | [databricks.md](../architecture/databricks.md) |
 | crm, formularios | Dono, canal de suporte e prazo de aviso de mudança | P-01, P-02 |
 | crm | CNPJ num formato só e validado na origem? | [crm](../../contracts/crm.odcs.yaml) P-03 |
 | crm | Interações 336 e 337: duplicata ou duas reuniões? | [crm](../../contracts/crm.odcs.yaml) P-04 |
