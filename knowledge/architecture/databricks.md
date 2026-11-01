@@ -70,6 +70,30 @@ Em `call_first.gold` (`PRD.md` RF-10 a RF-14, §2.6, §2.7, §2.9).
 - Gabarito: `gabarito/intencao_formularios.csv` copiado à mão para o Volume `raw/gabarito/` (`databricks fs cp`), lido só por `avaliacao_ia`.
 - Validação em 2026-11-01 (origem: consultas no SQL warehouse depois de `bundle run bronze_ingest -t dev`, duas vezes): as travas, a ordem e os 4 componentes conferem em todos os leads; a acurácia está em `gold.avaliacao_ia`; a segunda execução não chamou a IA.
 
+### Critérios de aceite com o lote ao vivo (2026-11-01, prompt v1)
+
+Origem: lote `formularios_lote_ao_vivo.jsonl` enviado ao bucket, `bundle run bronze_ingest -t dev` duas vezes e consultas no SQL warehouse em `gold.ia_formularios`, `gold.avaliacao_ia` e `gold.fila_priorizada`.
+
+| Critério | Resultado | Status |
+|---|---|---|
+| CA-02 · lote ao vivo | 20 formulários novos na bronze; rodar de novo copiou 0 arquivos e gerou 0 linhas | passou |
+| CA-07 · acurácia | 164 de 170 (96,5 %); 170 = 171 menos o duplo clique removido na silver | passou |
+| CA-08 · pegadinhas | 3 de 5 (meta: 4 de 5) | **falhou** |
+| CA-09 · "200 licenças" | produto Atlas Gestão, quantidade 200, prazo dezembro | passou |
+| CA-14 · sem IA repetida | 2ª execução com 0 chamadas de IA | passou |
+
+As 5 pegadinhas:
+
+| Form | Pegadinha | Esperado | Previsto (v1) |
+|---|---|---|---|
+| F00152 | compra escondida em texto informal | compra imediata | compra imediata |
+| F00153 | "Não é suporte! … quero CONTRATAR" | compra imediata | compra imediata |
+| F00154 | "comprar uma solução" para um erro do sistema | suporte | **compra imediata** |
+| F00155 | "Urgente!!!" de estudante | pesquisa | pesquisa |
+| F00156 | spam com "COMPRE AGORA" | spam | **compra imediata** |
+
+Os dois erros são armadilhas de palavra-chave: "comprar" e "compre" puxam o `ai_classify` para compra imediata. Como as travas de nota dependem da intenção, esses dois leads ficaram no meio da fila em vez de no fim. Os outros 4 erros do CA-07 são spam lido como pesquisa. A correção proposta (classificação v2) está em aberto no [registro de decisões](../decisions/decision-log.md).
+
 ## Secret scope `call_first`
 
 Credenciais das fontes, gravadas a partir do `.env` local. Só os nomes das chaves ficam aqui: `pg_host`, `pg_port`, `pg_database`, `pg_user`, `pg_password`, `s3_endpoint`, `s3_region`, `s3_access_key_id`, `s3_secret_access_key`, `s3_bucket`. Para trocar um valor: `databricks secrets put-secret call_first <chave> -p pessoal`.
