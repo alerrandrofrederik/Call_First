@@ -24,6 +24,15 @@ Uma linha por decisão. As decisões de arquitetura do produto (D-01 a D-05) est
 
 Pontos para a reunião com o dono de cada fonte. A lista completa e atualizada fica em `customProperties.openPoints` de cada contrato.
 
+Pontos da plataforma:
+
+| Data | Ponto | Contexto |
+|---|---|---|
+| 2026-11-01 | CA-08 falhou (3 de 5 pegadinhas com o prompt v1). Proposta: classificação v2 com `ai_query` e um prompt que define cada intenção (suporte = cliente com problema mesmo dizendo "comprar"; spam = oferta de terceiros mesmo dizendo "compre"), reprocessando as 170 mensagens e comparando v1 × v2 em `gold.avaliacao_ia`. Adiado pelo engenheiro de dados: não fazer agora | [databricks.md](../architecture/databricks.md#critérios-de-aceite-com-o-lote-ao-vivo-2026-11-01-prompt-v1) |
+| 2026-11-01 | O bucket do Supabase e a bronze já têm o lote ao vivo: para ensaiar a demo de novo é preciso limpar o bucket e o lado do Databricks (Volume `raw`, `bronze.formularios`, `gold.ia_formularios`) | [databricks.md](../architecture/databricks.md#tabelas-da-gold) |
+
+Pontos para os donos das fontes:
+
 | Fonte | Ponto | Contrato |
 |---|---|---|
 | plataforma | Os targets `dev` e `prod` do bundle usam os mesmos schemas `bronze`, `silver` e `gold`: separar (outro catálogo ou prefixo) ou aceitar no workshop? | [databricks.md](../architecture/databricks.md) |
