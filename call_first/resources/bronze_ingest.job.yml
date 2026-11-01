@@ -1,5 +1,5 @@
-# Ingestão e tratamento: o CRM (Postgres) e os formulários (Storage -> Volume) na bronze, o cache da BrasilAPI,
-# e o pipeline call_first_etl (bronze dos formulários + silver).
+# Ponta a ponta: o CRM (Postgres) e os formulários (Storage -> Volume) na bronze, o cache da BrasilAPI,
+# o pipeline call_first_etl (bronze dos formulários + silver), a IA (gold.ia_formularios) e o pipeline call_first_gold.
 # Diário, para um lead novo aparecer na fila em até 1 dia (PRD RNF-02). Em dev a agenda fica pausada.
 
 resources:
@@ -17,6 +17,10 @@ resources:
           default: ${var.catalog}
         - name: schema
           default: ${var.schema_bronze}
+        - name: schema_silver
+          default: ${var.schema_silver}
+        - name: schema_gold
+          default: ${var.schema_gold}
 
       tasks:
         - task_key: ingerir_crm
@@ -39,3 +43,15 @@ resources:
             - task_key: consultar_cnpj
           pipeline_task:
             pipeline_id: ${resources.pipelines.call_first_etl.id}
+
+        - task_key: enriquecer_ia
+          depends_on:
+            - task_key: atualizar_formularios
+          notebook_task:
+            notebook_path: ../src/gold/enriquecer_ia.py
+
+        - task_key: atualizar_gold
+          depends_on:
+            - task_key: enriquecer_ia
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.call_first_gold.id}

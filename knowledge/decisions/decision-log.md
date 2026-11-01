@@ -14,6 +14,11 @@ Uma linha por decisão. As decisões de arquitetura do produto (D-01 a D-05) est
 | 2026-11-01 | Silver: CNPJ inválido, DDD inexistente e interação repetida são **sinalizados** (flags + expectations em modo aviso), não removidos; só o envio repetido em até 5 minutos sai (RF-07) | Os pontos P-03, P-04 e P-05 ainda estão em aberto com o dono da fonte; remover agora perderia dado que pode ser legítimo | Engenheiro de dados, nesta sessão |
 | 2026-11-01 | Silver: lead só de formulário fica com `lead_id` nulo e `origem_lead = 'formulario'`; a chave da silver é `email_norm` | O ID gerado é da gold (`PRD.md` §2.9) | Engenheiro de dados, nesta sessão |
 | 2026-11-01 | BrasilAPI entra junto com a silver: cache cru em `bronze.cnpj_api`, só CNPJs com DV válido | `PRD.md` RF-03, RF-08, D-03 | Engenheiro de dados, nesta sessão |
+| 2026-11-01 | Gold: lead sem mensagem entra na fila com intenção `sem mensagem` (componente 20) e próximo passo "Qualificar por contato" | O PRD não define; 20 é o valor de "desconhecido" do porte (§2.6) | Plano da gold aprovado nesta sessão |
+| 2026-11-01 | Gold: histórico = leads com oportunidade ganha ÷ leads, por CNPJ, senão CNAE, senão geral, escalado min-max para 0–100 (50 quando todos iguais) | "Escalada para 0 a 100" (§2.6) sem método definido; taxa × 100 quase não diferenciaria os leads | Plano da gold aprovado nesta sessão |
+| 2026-11-01 | Gold: recência = 100 − dias × 100/30 desde o último formulário (ou `criado_em`), mínimo 0 | `PRD.md` §2.6 | Plano da gold aprovado nesta sessão |
+| 2026-11-01 | Gold: lead só de formulário recebe `lead_id = -abs(xxhash64(email_norm))` | Estável entre execuções e negativo, então não colide com `crm.leads.id` (`PRD.md` §2.9) | Plano da gold aprovado nesta sessão |
+| 2026-11-01 | Gold: IA incremental numa tarefa do job (`enriquecer_ia`, MERGE por `form_id`), fora do pipeline; a fila num pipeline separado (`call_first_gold`) que roda depois | Uma materialized view recalcularia a IA de toda a base a cada execução (RNF-05, CA-14) | Plano da gold aprovado nesta sessão |
 
 ## Em aberto
 

@@ -55,6 +55,21 @@ Materialized views do pipeline `call_first_etl` em `call_first.silver` (`PRD.md`
 
 Validação em 2026-11-01 (origem: consultas no SQL warehouse depois de `bundle run bronze_ingest -t dev`, duas vezes): os números batem com o [perfil](../../reports/profile_crm_formularios.html) (duplo clique removido, CNPJs e DDDs inválidos sinalizados, o par de interações marcado, nenhum CNPJ inválido enviado à API), e a segunda execução não fez nenhuma consulta nova nem mudou as contagens.
 
+## Tabelas da gold
+
+Em `call_first.gold` (`PRD.md` RF-10 a RF-14, §2.6, §2.7, §2.9).
+
+| Tabela | Tipo | Escrita por | O que guarda |
+|---|---|---|---|
+| `ia_formularios` | Delta, MERGE | job `bronze_ingest`, tarefa `enriquecer_ia` | intenção, entidades, resumo e próximo passo por `form_id`; só formulário novo vai para a IA (RNF-05); modelo e versão do prompt em cada linha |
+| `historico_conversao` | materialized view | pipeline `call_first_gold` | taxa de conversão por CNPJ, CNAE e geral, e o componente histórico 0–100 (min-max) |
+| `fila_priorizada` | materialized view | pipeline `call_first_gold` | um lead por linha, `posicao` na fila, `nota` e `nota_componentes`; contém dados pessoais |
+| `avaliacao_ia` | materialized view | pipeline `call_first_gold` | matriz de confusão da intenção contra o gabarito; sem dados pessoais |
+
+- IA: `ai_classify` e `ai_extract` (modelo padrão da Databricks) e `ai_query` com `databricks-meta-llama-3-3-70b-instruct` e o prompt de [`src/gold/prompts.py`](../../call_first/src/gold/prompts.py). Mensagem com menos de 5 caracteres vira `spam` sem IA.
+- Gabarito: `gabarito/intencao_formularios.csv` copiado à mão para o Volume `raw/gabarito/` (`databricks fs cp`), lido só por `avaliacao_ia`.
+- Validação em 2026-11-01 (origem: consultas no SQL warehouse depois de `bundle run bronze_ingest -t dev`, duas vezes): as travas, a ordem e os 4 componentes conferem em todos os leads; a acurácia está em `gold.avaliacao_ia`; a segunda execução não chamou a IA.
+
 ## Secret scope `call_first`
 
 Credenciais das fontes, gravadas a partir do `.env` local. Só os nomes das chaves ficam aqui: `pg_host`, `pg_port`, `pg_database`, `pg_user`, `pg_password`, `s3_endpoint`, `s3_region`, `s3_access_key_id`, `s3_secret_access_key`, `s3_bucket`. Para trocar um valor: `databricks secrets put-secret call_first <chave> -p pessoal`.
@@ -68,8 +83,9 @@ O código e os recursos do Databricks são publicados pelo bundle em [`call_firs
 - targets `dev` (padrão, `mode: development`) e `prod`, os dois no catálogo `call_first`;
 - variáveis `schema_bronze`, `schema_silver` e `schema_gold`, com padrão `bronze`, `silver` e `gold`;
 - dev e prod usam os mesmos schemas, então um deploy em dev grava nas tabelas de prod (decisão em aberto, ver o [registro de decisões](../decisions/decision-log.md));
-- job `bronze_ingest` (`resources/bronze_ingest.job.yml`), diário (pausado em dev): `ingerir_crm` em paralelo com `copiar_formularios` → `consultar_cnpj` → `atualizar_formularios` (o pipeline);
+- job `bronze_ingest` (`resources/bronze_ingest.job.yml`), diário (pausado em dev): `ingerir_crm` em paralelo com `copiar_formularios` → `consultar_cnpj` → `atualizar_formularios` (pipeline `call_first_etl`) → `enriquecer_ia` → `atualizar_gold` (pipeline `call_first_gold`);
 - pipeline `call_first_etl` (serverless): a bronze dos formulários e a silver inteira;
+- pipeline `call_first_gold` (serverless): histórico, fila priorizada e avaliação da IA;
 - o código de exemplo do template (taxis, `sample_job`) foi removido.
 
 Comandos: `databricks bundle deploy -t dev -p pessoal` e `databricks bundle run bronze_ingest -t dev -p pessoal`, a partir de `call_first/`. Só o target `dev` foi publicado até agora.
