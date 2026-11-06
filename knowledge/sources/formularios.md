@@ -19,7 +19,7 @@ Um objeto JSON por linha, com 11 campos e `utm` aninhado (`source`, `campaign`).
 
 ## Na bronze
 
-O notebook [`copiar_formularios.py`](../../call_first/src/bronze/copiar_formularios.py) copia do bucket para o Volume `call_first.bronze.raw` só os arquivos novos, e o pipeline `call_first_etl` ([`formularios.py`](../../call_first/src/call_first_etl/transformations/formularios.py)) ingere cada um uma vez com Auto Loader na streaming table `call_first.bronze.formularios`. Detalhes em [databricks.md](../architecture/databricks.md#tabelas-da-bronze).
+O notebook [`copiar_formularios.py`](../../call_first/src/bronze/copiar_formularios.py) copia do bucket para o Volume `call_first.bronze.raw` só os arquivos novos, e o pipeline `call_first_etl` ([`formularios.py`](../../call_first/src/call_first_etl/transformations/bronze/formularios.py)) ingere cada um uma vez com Auto Loader na streaming table `call_first.bronze.formularios`. Detalhes em [databricks.md](../architecture/databricks.md#tabelas-da-bronze).
 
 Para a demo, subir o lote ao vivo no bucket (`storage/upload_supabase_storage.py --lote`) e rodar o job de novo: só o arquivo novo entra.
 

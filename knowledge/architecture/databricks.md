@@ -9,15 +9,15 @@
 
 Todo objeto do projeto fica no catálogo `call_first` do Unity Catalog (origem: `CLAUDE.md`).
 
-| Schema | Papel | Conteúdo em 2026-11-01 |
+| Schema | Papel | Conteúdo em 2026-11-06 |
 |---|---|---|
-| `bronze` | dado como veio das fontes, mais colunas técnicas (`PRD.md` RF-04) | volume `raw` e 6 tabelas (ver abaixo) |
-| `silver` | dado limpo, deduplicado e enriquecido (`PRD.md` §2.4) | vazio |
-| `gold` | IA e nota de prioridade, pronto para o negócio (`PRD.md` §2.4 e §2.9) | vazio |
-| `default` | criado automaticamente | vazio |
+| `bronze` | dado como veio das fontes, mais colunas técnicas (`PRD.md` RF-04) | volume `raw` e 7 tabelas (ver [Tabelas da bronze](#tabelas-da-bronze)) |
+| `silver` | dado limpo, deduplicado e enriquecido (`PRD.md` §2.4) | 7 materialized views (ver [Tabelas da silver](#tabelas-da-silver)) |
+| `gold` | IA e nota de prioridade, pronto para o negócio (`PRD.md` §2.4 e §2.9) | 3 materialized views e 1 tabela Delta (ver [Tabelas da gold](#tabelas-da-gold)) |
+| `default` | criado automaticamente | não conferido em 2026-11-06 |
 | `information_schema` | criado automaticamente pelo sistema | |
 
-Origem do conteúdo: `databricks schemas list`, `tables list` e `volumes list` com `-p pessoal`, 2026-11-01.
+Origem do conteúdo: `databricks schemas list` e `tables list` com `-p pessoal`, 2026-11-06; o volume `raw` e o schema `default` vêm da conferência de 2026-11-01.
 
 ## Volumes
 
@@ -93,6 +93,19 @@ As 5 pegadinhas:
 | F00156 | spam com "COMPRE AGORA" | spam | **compra imediata** |
 
 Os dois erros são armadilhas de palavra-chave: "comprar" e "compre" puxam o `ai_classify` para compra imediata. Como as travas de nota dependem da intenção, esses dois leads ficaram no meio da fila em vez de no fim. Os outros 4 erros do CA-07 são spam lido como pesquisa. A correção proposta (classificação v2) está em aberto no [registro de decisões](../decisions/decision-log.md).
+
+### Outros critérios de aceite (medidos em 2026-11-06)
+
+Origem: consultas de agregados no SQL warehouse em `bronze.cnpj_api`, `bronze.formularios`, `silver.formularios`, `silver.leads` e `gold.fila_priorizada`. O job não rodou entre 2026-11-01 e esta medição.
+
+| Critério | Resultado | Status |
+|---|---|---|
+| CA-03 · cache da BrasilAPI | 30 linhas para 30 CNPJs, todas HTTP 200, gravadas numa única janela de 21 s. Evidência indireta: as chamadas não foram contadas, mas o código só consulta CNPJ fora do cache e grava toda resposta 200 | passou |
+| CA-04 · CNPJ | 68 formulários com máscara e 0 sem convergir; 3 valores inválidos distintos com `cnpj_valido = false`, presentes em 68 leads da silver. "Os 3 inválidos" do PRD foi lido como 3 valores distintos | passou |
+| CA-05 · duplicatas | 448 leads e 448 e-mails distintos; 171 formulários na bronze e 170 na silver; 0 envios repetidos em até 5 minutos | passou |
+| CA-06 · empresa nula | 144 leads sem CNPJ válido na gold, 0 com campos de empresa preenchidos (`porte`, `cnae`, `cnae_descricao`, `empresa_uf`); 448 leads na silver e na fila | passou |
+| CA-10 · travas | nota máxima 5 em `spam` e 25 em `suporte` | passou |
+| CA-11 · fila | 0 linhas fora de ordem, 0 componentes nulos, 448 posições distintas | passou |
 
 ## Secret scope `call_first`
 

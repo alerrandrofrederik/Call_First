@@ -35,5 +35,5 @@ Termos e regras confirmados nos documentos ou nos dados. Cada um traz a origem.
 | Os leads sem vendedor têm todos status `novo` (ponto aberto P-08 no contrato do CRM) | [perfil](../../reports/profile_crm_formularios.html) |
 | `fechada_em` está preenchida só nas oportunidades `ganha` ou `perdida`, e `motivo_perda` só nas `perdida` | [perfil](../../reports/profile_crm_formularios.html) |
 | Um mesmo lead pode mandar mais de um formulário com conteúdo diferente; a silver fica com um lead e a mensagem mais recente (`qtd_formularios` conta os envios) | `silver.leads`, 2026-11-01 |
-| A IA erra a intenção em poucos casos, todos spam lidos como pesquisa; o número exato está em `gold.avaliacao_ia` | `gold.avaliacao_ia`, 2026-11-01 |
+| A IA erra a intenção em poucos casos: spam lido como pesquisa e, nas pegadinhas do CA-08, suporte e spam lidos como compra imediata; os números estão em `gold.avaliacao_ia` | `gold.avaliacao_ia` e [databricks.md](../architecture/databricks.md#critérios-de-aceite-com-o-lote-ao-vivo-2026-11-01-prompt-v1), 2026-11-01 |
 | Os 30 CNPJs válidos têm porte `DEMAIS` na Receita; 29 estão com situação `ATIVA` e 1 `BAIXADA`. Com esses dados, o componente porte da nota (`PRD.md` §2.6) é o mesmo para todo lead com CNPJ válido | `silver.empresas` (BrasilAPI), 2026-11-01 |
