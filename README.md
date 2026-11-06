@@ -14,6 +14,7 @@ Projeto do workshop "Engenharia de dados + IA aplicada a vendas". O cliente é a
   - [Onde estamos](#onde-estamos)
   - [Estrutura do repositório](#estrutura-do-repositório)
   - [Como rodar](#como-rodar)
+  - [Como contribuir](#como-contribuir)
 - [Parte 2 · Guia de estudo](#parte-2--guia-de-estudo)
 
 ---
@@ -224,6 +225,15 @@ Os leads usam CNPJs de matriz de 30 empresas reais e públicas, todos com dígit
 Na Free Edition, a saída para a internet pode ser restrita. Teste primeiro com `databricks/00_teste_conexoes.py`. Neste workspace, o serverless alcança o Postgres, o Storage e a BrasilAPI (testado em 2026-11-01).
 
 </details>
+
+## Como contribuir
+
+Na branch `main` só entram features **aprovadas em pull request** e com os **testes passando**. Ninguém envia direto para a `main`:
+
+1. Crie uma branch a partir da `main` e faça a mudança nela.
+2. Abra um pull request para a `main`.
+3. O CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda os testes de [`test/`](test/). O job `test` precisa passar, com a branch atualizada em relação à `main`.
+4. Com o pull request aprovado e os testes passando, faça o merge.
 
 ---
 
