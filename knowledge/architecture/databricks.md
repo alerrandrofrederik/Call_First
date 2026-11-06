@@ -107,6 +107,10 @@ Origem: consultas de agregados no SQL warehouse em `bronze.cnpj_api`, `bronze.fo
 | CA-10 · travas | nota máxima 5 em `spam` e 25 em `suporte` | passou |
 | CA-11 · fila | 0 linhas fora de ordem, 0 componentes nulos, 448 posições distintas | passou |
 
+## Qualidade
+
+O veredito por tabela, os resultados de cada check e o frescor estão no [relatório de qualidade de 2026-11](../../reports/quality_2026-11.html), medido em 2026-11-06. Os resultados das expectations não aparecem em `databricks pipelines list-pipeline-events`, que não traz `details`: leia pela função `event_log('<pipeline_id>')` no SQL warehouse (origem: consultas de 2026-11-06).
+
 ## Secret scope `call_first`
 
 Credenciais das fontes, gravadas a partir do `.env` local. Só os nomes das chaves ficam aqui: `pg_host`, `pg_port`, `pg_database`, `pg_user`, `pg_password`, `s3_endpoint`, `s3_region`, `s3_access_key_id`, `s3_secret_access_key`, `s3_bucket`. Para trocar um valor: `databricks secrets put-secret call_first <chave> -p pessoal`.
