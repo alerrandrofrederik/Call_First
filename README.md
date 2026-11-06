@@ -515,3 +515,22 @@ Corrigir as pegadinhas (v2), provar o valor com o backtest, construir o painel e
 6. **Repositório público**: tirar a URL do workspace e o e-mail do `call_first/databricks.yml`.
 
 Para ir mais fundo: [`knowledge/README.md`](knowledge/README.md) é o índice de tudo o que o projeto aprendeu.
+
+<details>
+<summary>Como este projeto foi criado</summary>
+
+```bash
+# 1. Cria o projeto Python com a versão desejada
+uv init Call_Firt --python 3.12
+cd Call_Firt
+
+# 2. Inicializa o Git e faz o primeiro commit
+git init
+git add .
+git commit -m "Initial commit"
+
+# 3. Cria o repositório público no GitHub, associa o remoto e faz o push
+gh repo create Call_Firt --public --source=. --remote=origin --push
+```
+
+</details>
