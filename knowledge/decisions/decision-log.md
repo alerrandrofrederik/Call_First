@@ -29,6 +29,7 @@ Pontos da plataforma:
 | Data | Ponto | Contexto |
 |---|---|---|
 | 2026-11-01 | CA-08 falhou (3 de 5 pegadinhas com o prompt v1). Proposta: classificação v2 com `ai_query` e um prompt que define cada intenção (suporte = cliente com problema mesmo dizendo "comprar"; spam = oferta de terceiros mesmo dizendo "compre"), reprocessando as 170 mensagens e comparando v1 × v2 em `gold.avaliacao_ia`. Adiado pelo engenheiro de dados: não fazer agora | [databricks.md](../architecture/databricks.md#critérios-de-aceite-com-o-lote-ao-vivo-2026-11-01-prompt-v1) |
+| 2026-11-06 | Lacunas de checks: `silver.leads` sem check de DDD, `gold.ia_formularios`, `gold.avaliacao_ia` e a bronze sem nenhum check, e nenhum dos checks que nunca falharam testado com dado ruim. Criar checks ou aceitar? | [Relatório de qualidade](../../reports/quality_2026-11.html) |
 | 2026-11-01 | O bucket do Supabase e a bronze já têm o lote ao vivo: para ensaiar a demo de novo é preciso limpar o bucket e o lado do Databricks (Volume `raw`, `bronze.formularios`, `gold.ia_formularios`) | [databricks.md](../architecture/databricks.md#tabelas-da-gold) |
 
 Pontos para os donos das fontes:
