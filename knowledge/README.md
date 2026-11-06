@@ -28,9 +28,3 @@ Regras:
 - [sources/crm.md](sources/crm.md): fonte CRM, Supabase Postgres schema crm, com metadados e contrato
 - [sources/formularios.md](sources/formularios.md): fonte formulários, Supabase Storage em JSON Lines, com metadados e contrato
 
-## Veja também
-
-- [Runbook](../docs/runbook.md) e [guias](../docs/guides/): os comandos e as tarefas repetidas.
-- [Produtos de dados](../docs/data-products/fato_vendas/README.md): o que a gold serve aos consumidores, com os contratos.
-- [Site de documentação](../docs/site/index.html), gerado do repositório por `tools/site/build_site.py`.
-

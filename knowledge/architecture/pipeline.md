@@ -15,7 +15,7 @@
 | BrasilAPI | bronze | só CNPJs que ainda não estão no cache | `PRD.md` RF-03, D-03 |
 | bronze | silver | CNPJ com 14 dígitos e DV validado, e-mail normalizado, deduplicação CRM × formulários, enriquecimento, expectations | `PRD.md` RF-05 a RF-09 |
 | silver | gold | AI Functions (intenção, entidades, resumo) e a nota de 0 a 100 | `PRD.md` RF-10 em diante, §2.6, §2.7 |
-| gold | consumo | painel e Genie | `PRD.md` RF-15, RF-16 |
+| gold | consumo | painel e Genie, ainda não construídos | `PRD.md` RF-15, RF-16; `README.md` "Onde estamos" |
 
 A bronze guarda o dado como veio, com as colunas técnicas `_fonte`, `_arquivo` e `_ingerido_em` (origem: `PRD.md` RF-04).
 
